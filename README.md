@@ -3,7 +3,7 @@
 Clone [salt-routers](https://git.occrp.org/libre/salt-routers) repository on your laptop:
 
 ```
-git clone https://git.occrp.org/rysiek/salt-routers.git
+git clone https://git.occrp.org/libre/salt-routers.git
 ```
 
 To setup **[WireGuard](https://www.wireguard.com/install/)** and **[Salt](https://docs.saltstack.com/en/latest/)** on **[OpenWRT](https://openwrt.org/)** router run the script `setup.sh` contained in this repository. Prerequisites:
@@ -19,6 +19,7 @@ Before running the script:
 * Choose router's name (`$SALT_NAME`) (standarization is a good thing, perhaps consider something like: `router-` + last 6 chars of MAC address)
 * Choose WireGuard address for router (`$WG_ADDRESS`) (check your WireGuard config on your Salt Master server)
 * Fill out the `wireguard-config.conf` file
+* Fill out the pillar files (instructions bellow)
 
 Then run from your laptop:
 
@@ -26,7 +27,7 @@ Then run from your laptop:
 
 You will need to enter:
 
-* Router address: `$ROUTER`
+* Router address (default is 192.168.1.1): `$ROUTER`
 * WireGuard address (without /24): `$WG_ADDRESS`
 * Salt name (without spaces): `$SALT_NAME`
 
@@ -38,26 +39,35 @@ Rest of configuration will be done by script:
 * Router's name added in salt roster on salt-routers VM
 * salt-router's ssh key added to router's dropbear key manager
 * `Cannot locate OpenSSL libcrypto` error solved (after every reboot this needs to be done [manually](#fix-cannot-locate-openssl-libcrypto-error))
-* Router configured with default settings (wifi ssid, password, hostname, zabbix, nordvpn installed and configured and disabled, 5ghz channel disabled)
+* Router configured with default settings (wifi ssid, password, hostname, zabbix, nordvpn installed and configured, not enabled)
 
 ## Create pillar config
+
+It's a good idea to have a `general.sls` pillar file which would define default values for your routers. `general.sls` file should have defined:
+
+```yaml
+zabbix_server: <ZABBIX_SERVER_IP>
+ssid: <WIFI_SSID>
+wifi_key: <WIFI_PASSWORD>
+channel2ghz: <CHANNEL_2GHz>
+channel5ghz: <CHANNEL_5GHz>
+lan_ip: <STATIC_LAN_IP>
+```
 
 To create specific configuration for router, create `settings-<last-6-MAC-chars>.sls` file in `/srv/pillar/` on the Salt Master server. Currently available settings:
 
 ```yaml
-channel2ghz: <CHANNEL 2>
-channel5ghz: <CHANNEL 5>
-lan_ip: <STATIC LAN IP>
-nordvpn_config: <NORDVPN CONFIG FILE>
-nordvpn_username: <USERNAME>
-nordvpn_password: <PASSWORD>
-ssid: <WIFI SSID>
-wifi_key: <WIFI PASS>
+channel2ghz: <CHANNEL_2GHz>
+channel5ghz: <CHANNEL_5GHz>
+lan_ip: <STATIC_LAN_IP>
+nordvpn_config: <NORDVPN_CONFIG_FILE>
+nordvpn_username: <NORDVPN_USERNAME>
+nordvpn_password: <NORDVPN_PASSWORD>
+ssid: <WIFI_SSID>
+wifi_key: <WIFI_PASSWORD>
 ```
 
 If you omit some of these, the default ones defined in `general.sls` will be used.
-
-**NOTE:** default setting for channel2 is **1**, and for channel5: **112**.
 
 In `top.sls` append:
 
@@ -69,19 +79,19 @@ base:
     - settings-<last-6-MAC-chars>
 ```
 
-Then run appropriate state `.sls` files from `/srv/salt/` or apply top state:
+Then apply appropriate state `.sls` files from `/srv/salt/` or apply top state:
 
 `salt-ssh $SALT_NAME state.apply`
 
 ## Fix Cannot locate OpenSSL libcrypto error
 
-For some reason, **python's** `ctypes.util.find_library('crypto')` is not finding **libcrypto.so.1.0.0** (symlink doesn't help) so we are defining it manually using **fix_oserror.sh** script. `rsax931.py` is in `/tmp/` directory so this needs to be fixed every time router reboots. On salt-routers VM, run:
+For some reason, **python's** `ctypes.util.find_library('crypto')` is not finding **libcrypto.so.1.0.0** (symlink doesn't help) so we are defining it manually using **fix_oserror.sh** script. `rsax931.py` is in `/tmp/` directory so this needs to be fixed every time router reboots. On salt-routers master, run:
 
 `/srv/salt/fix_oserror.sh $SALT_NAME`
 
-## Set-up NordVPN on salt-router
+## Set-up NordVPN on router
 
-After having **salt** set-up on router, run:
+If you have NordVPN account and you want to set it up on on router so that every device that connects is tunneled through VPN, run:
 
 ```bash
 salt-ssh <minion-name> state.sls nordvpn/nordvpn_basic
@@ -175,7 +185,7 @@ This will:
 * start **openvpn** using: `/etc/init.d/openvpn start`
 * restart **firewall** 3 seconds after **openvpn** starts with `sleep 3 && /etc/init.d/firewall restart`
 
-## Salt state files
+## Salt state files description
 
 Salt states (`.sls` files) are configuration files for hosts. They need to be placed in `srv/salt/`. Variables in states are defined in **pillar** files located in `/srv/pillar/<pillar-file.sls>`. State files can be applied with (e.g. apply `wifi.sls` state):
 
@@ -192,10 +202,7 @@ salt-ssh <host-name> state.sls wifi
 * hostname
 * wifi
 * zabbix
-* channel2ghz
-* channel5ghz
 * nordvpn/nordvpn_basic
-* disable5ghz
 
 ### channel2ghz.sls and channel5ghz.sls
 
@@ -219,7 +226,7 @@ Used for setting power on 2ghz and 5ghz channels. Now part of `channel2ghz.sls` 
 
 ### wifi.sls
 
-Sets wifi ssid, enables wifi if disabled, sets wifi password and reloads wifi. Variables **pillar['ssid']** and **pillar['wifi_key']** define wifi name and password respectively. They need to be defined in **pillar** file. If not, default value will be used (ssid: `Nije nama lako` and it's password)
+Sets wifi ssid, enables wifi if disabled, sets wifi password and reloads wifi. Variables **pillar['ssid']** and **pillar['wifi_key']** define wifi name and password respectively. They need to be defined in **pillar** file. If not, default value will be used (ssid defined in pillar and it's password)
 
 ### zabbix.sls
 
@@ -278,3 +285,4 @@ Please contact `tech@occrp.org` with any questions, patches, suggestions, and co
 ## Authors
 
 Kenan Ibrović `<kenan@occrp.org>`
+
