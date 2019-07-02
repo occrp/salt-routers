@@ -83,8 +83,7 @@ echo -e "\n\n* * * New password for root:\n$PASSWORD\n\n"
 echo "=========================================================="
 echo -e "\n\nWireguard conf: $WG_PEER_CONFIG\n\nSalt config: $SALT_CONFIG\n"
 echo -e "RUN ON salt-routers:\n\necho \"$WG_PEER_CONFIG\" >> /etc/wireguard/wg0.conf\necho \"$SALT_CONFIG\" >> /etc/salt/roster\n\nifdown wg0\n\nifup wg0"
-echo "Save the config and send to OCCRP team in encrypted email"
-echo "Press any key to continue..."
+echo "Save the config and press any key to continue..."
 echo "=========================================================="
 read
 
