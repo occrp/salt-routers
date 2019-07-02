@@ -269,3 +269,8 @@ Asuming nordvpn config is present, but disabled on host, reenables nordvpn inter
 * uncomments rules in `/etc/firewall.user`
 * starts and enables autostart of openvpn
 * restarts firewall 3 seconds after starting openvpn
+
+
+## Contact and contributing
+
+Please contact `tech@occrp.org` with any questions, patches, suggestions, and complaints.
