@@ -274,3 +274,7 @@ Asuming nordvpn config is present, but disabled on host, reenables nordvpn inter
 ## Contact and contributing
 
 Please contact `tech@occrp.org` with any questions, patches, suggestions, and complaints.
+
+## Authors
+
+Kenan Ibrović `<kenan@occrp.org>`
