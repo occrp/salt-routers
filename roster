@@ -1,0 +1,13 @@
+# Roster file for Salted routers
+
+router-1:
+  host: 10.100.1.6
+  user: root
+  sudo: True
+
+router-2:
+  host: 10.100.1.7
+  user: root
+  sudo: True
+  
+# and so on
