@@ -19,7 +19,7 @@ Before running the script:
 * Choose router's name (`$SALT_NAME`) (standarization is a good thing, perhaps consider something like: `router-` + last 6 chars of MAC address)
 * Choose WireGuard address for router (`$WG_ADDRESS`) (check your WireGuard config on your Salt Master server)
 * Fill out the `wireguard-config.conf` file
-* Fill out the pillar files (instructions bellow)
+* Fill out the pillar files ([Create pillar config](#create-pillar-config))
 
 Then run from your laptop:
 
