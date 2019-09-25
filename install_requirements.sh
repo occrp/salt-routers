@@ -77,16 +77,17 @@ done
 # install salt-requirements
 ssh root@$ROUTER 'opkg update && opkg install python python-pip sudo bash'
 
-echo
-echo "CREATE TEMP FILES IF THEY DON'T EXIST"
-echo
-salt-ssh -i $SALT_NAME test.ping
-
-# TEMPORARY SOLUTION!!! Remove the code from rsax931.py to avoid OSError: Cannot locate OpenSSL libcrypto
-echo
-echo "SOLVING OSError: Cannot locate OpenSSL libcrypto"
-echo
-salt-ssh $SALT_NAME -r "cd /var/tmp/.root*/py2/salt/utils/ && sed -i \"s/lib = find_library('crypto')/lib = 'libcrypto.so.1.0.0'/\" rsax931.py"
+# Not required since OpenWRT v18
+#echo
+#echo "CREATE TEMP FILES IF THEY DON'T EXIST"
+#echo
+#salt-ssh -i $SALT_NAME test.ping
+#
+## TEMPORARY SOLUTION!!! Remove the code from rsax931.py to avoid OSError: Cannot locate OpenSSL libcrypto
+#echo
+#echo "SOLVING OSError: Cannot locate OpenSSL libcrypto"
+#echo
+#salt-ssh $SALT_NAME -r "cd /var/tmp/.root*/py2/salt/utils/ && sed -i \"s/lib = find_library('crypto')/lib = 'libcrypto.so.1.0.0'/\" rsax931.py"
 
 # Apply config from top.sls
 echo
