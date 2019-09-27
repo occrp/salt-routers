@@ -25,7 +25,7 @@ Manage fleet of routers across the world using OpenWRT, WireGuard, Salt. Optiona
     11. [nordvpn/disable_vpn.sls](#nordvpndisable_vpnsls)
     12. [nordvpn/enable_vpn.sls](#nordvpnenable_vpnsls)
     13. [upgrade.sls](#upgradesls)
-9. [Contact and covtributing](#contact-and-contributing)
+9. [Contact and contributing](#contact-and-contributing)
 10. [Authors](#authors)
 
 ## Setup WireGuard and Salt on OpenWRT Router
@@ -345,8 +345,6 @@ Asuming you have firmware upgrade file, it will:
 
 * copy firmware file to routers `/tmp/` directory
 * run `sysupgrade -F /tmp/{{ firmware }}'
-
-
 
 ## Contact and contributing
 
