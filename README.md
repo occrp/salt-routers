@@ -1,3 +1,31 @@
+# Salt routers
+
+Manage fleet of routers across the world using OpenWRT, WireGuard, Salt. Optionally protect your traffic with OpenVPN.
+
+## Table of contents:
+
+1. [Setup WireGuard and Salt on OpenWRT Router](#Setup WireGuard and Salt on OpenWRT Router)
+2. [Create pillar config](#Create pillar config)
+3. [Fix Cannot locate OpenSSL libcrypto error](#Fix Cannot locate OpenSSL libcrypto error)
+4. [Set-up NordVPN on router](#Set-up NordVPN on router)
+5. [Disable NordVPN](#Disable NordVPN)
+6. [Enable NordVPN](#Enable NordVPN)
+7. [Salt state files description](#Salt state files description)
+    1. [top.sls](#top.sls)
+    2. [channel2ghz.sls and channel5ghz.sls](#channel2ghz.sls and channel5ghz.sls)
+    3. [dhcp.sls](#dhcp.sls)
+    4. [disable5ghz.sls](#disable5ghz.sls)
+    5. [hostname.sls](#hostname.sls)
+    6. [power2ghz.sls and power5ghz.sls](#power2ghz.sls and power5ghz.sls)
+    7. [wifi.sls](#wifi.sls)
+    8. [zabbix.sls](#zabbix.sls)
+    9. [nordvpn/nordvpn_basic.sls](#nordvpn/nordvpn_basic.sls)
+    10. [nordvpn/add_nordvpn.sls](#nordvpn/add_nordvpn.sls)
+    11. [nordvpn/disable_vpn.sls](#nordvpn/disable_vpn.sls)
+    12. [nordvpn/enable_vpn.sls](#nordvpn/enable_vpn.sls)
+8. [Contact and contributing](#Contact and contributing)
+9. [Authors](#Authors)
+
 ## Setup WireGuard and Salt on OpenWRT Router
 
 Clone [salt-routers](https://git.occrp.org/libre/salt-routers) repository on your laptop:
@@ -89,6 +117,8 @@ For some reason, **python's** `ctypes.util.find_library('crypto')` is not findin
 
 `/srv/salt/fix_oserror.sh $SALT_NAME`
 
+**UPDATE**: This problem is fixed in **OpenWRT 18.06** so this is not required anymore.
+
 ## Set-up NordVPN on router
 
 If you have NordVPN account and you want to set it up on on router so that every device that connects is tunneled through VPN, run:
@@ -129,7 +159,7 @@ lan_ip: 172.16.24.1
 nordvpn_config: de70.nordvpn.com.udp.ovpn
 nordvpn_username: <nordvpn_email_account>
 nordvpn_password: <nordvpn_password>
-ssid: RigaConference2018
+ssid: SaltRouter Private 
 ```
 
 * add pillar in pillars `top.sls` file
@@ -184,6 +214,34 @@ This will:
 * uncomment rules in `/etc/firewall.user`
 * start **openvpn** using: `/etc/init.d/openvpn start`
 * restart **firewall** 3 seconds after **openvpn** starts with `sleep 3 && /etc/init.d/firewall restart`
+
+## Upgrade firmware
+
+Firmware update keeps configuration files but manually installed packages are lost. Exroot configuration is also lost. New firmware is saved on router's internal memory. This means that remote connection using WireGuard is also lost. Having configuration files kept, all we need to do is ensure WireGuard is installed during/after firmware upgrade.
+
+This can be solved using [Image Builder](https://openwrt.org/docs/guide-user/additional-software/imagebuilder). Image Builder allows us to add/delete preinstalled packages in openwrt firmware. This means we can add necessary WireGuard packages to ensure we have it installed during upgrade.
+
+Image Builder can be downloaded for appropriate version of firmware from [this link](https://downloads.openwrt.org/releases/). In the **Supplementary Files** section of image files list, download the `openwrt-imagebuilder-OPENWRT-VERSION.Linux-x86_64.tar.gz` file. 
+
+Extract and navigate to directory then run:
+
+```bash
+make image PACKAGES="kmod-wireguard luci-proto-wireguard wireguard wireguard-tools"
+```
+
+This will generate factory and sysupgrade files in `<path-to-image-builder-dir>/build_dir/target-*/linux-*/tmp/`.
+
+Now we have firmware files which has WireGuard pkgs installed. Copy sysupgrade file to Salt Master in /srv/salt/firmware/ directory and run `upgrade.sls` state on desired router. 
+
+```bash
+salt-ssh <minion-name> state.sls upgrade
+```
+
+To upgrade many devices at the same time, create a nodegroup with targeted devices:
+
+```bash
+salt-ssh -N <upgrade-nodegroup> state.sls upgrade
+```
 
 ## Salt state files description
 
@@ -276,6 +334,16 @@ Asuming nordvpn config is present, but disabled on host, reenables nordvpn inter
 * uncomments rules in `/etc/firewall.user`
 * starts and enables autostart of openvpn
 * restarts firewall 3 seconds after starting openvpn
+
+### upgrade.sls
+
+**Before runing this state, make sure you read instructions for [Upgrading Firmware] with WireGuard package added to sysupgrade file. Otherwise, you will LOSE remote access to router** 
+
+Asuming you have firmware upgrade file, it will:
+
+* copy firmware file to routers `/tmp/` directory
+* run `sysupgrade -F /tmp/{{ firmware }}'
+
 
 
 ## Contact and contributing
