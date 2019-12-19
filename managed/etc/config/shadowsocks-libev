@@ -1,0 +1,23 @@
+
+config server 'Outline'
+	option server '{{ pillar['outline_server'] }}'
+	option server_port '{{ pillar['outline_port'] }}'
+	option method '{{ pillar['outline_method'] }}'
+	option password '{{ pillar['outline_password'] }}'
+
+config ss_redir 'outline'
+	option mode 'tcp_and_udp'
+	option server 'Outline'
+	option local_port '1080'
+	option mtu '1492'
+	option timeout '10'
+	option verbose '1'
+
+config ss_rules 'ss_rules'
+	option redir_tcp 'outline'
+	option redir_udp 'outline'
+	list src_ips_forward '0.0.0.0/24'
+	option local_default 'forward'
+	option src_default 'forward'
+	option dst_default 'forward'
+
